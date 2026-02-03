@@ -3,7 +3,7 @@ import { io } from "socket.io-client";
 import { useAuthStore } from "./useAuthStore";
 import { useChatStore } from "./useChatStore";
 import { useMessageStore } from "./useMessageStore";
-const BACKEND_URL = "http://192.168.0.134:5001";
+const BACKEND_URL = "http://localhost:5001";
 export const useChatRealtimeStore = create((set, get) => ({
   socket: null,
   onlineUsers: [],
