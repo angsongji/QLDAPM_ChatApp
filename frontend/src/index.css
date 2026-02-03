@@ -1,0 +1,47 @@
+@import "tailwindcss";
+@import "tailwind-scrollbar-hide/v4";
+@plugin "daisyui" {
+  themes: light --default, dark --prefersdark, cupcake, halloween;
+}
+:root {
+  --padding-x: 3rem;
+}
+
+@media (max-width: 768px) {
+  :root {
+    --padding-x: 1rem;
+  }
+}
+.loader {
+  height: 60px;
+  aspect-ratio: 2;
+  border-bottom: 3px solid #0000;
+  background: linear-gradient(90deg, lightblue 50%, #0000 0) -25% 100%/50% 3px repeat-x
+    border-box;
+  position: relative;
+  animation: line 0.5s linear infinite;
+}
+.loader:before {
+  content: "";
+  position: absolute;
+  inset: auto 42.5% 0;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: darkblue;
+  animation: circle 0.5s cubic-bezier(0, 900, 1, 900) infinite;
+}
+@keyframes line {
+  to {
+    background-position: -125% 100%;
+  }
+}
+@keyframes circle {
+  0%,
+  2% {
+    bottom: 0%;
+  }
+  98%,
+  to {
+    bottom: 0.1%;
+  }
+}
