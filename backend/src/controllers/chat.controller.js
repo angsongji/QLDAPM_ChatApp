@@ -69,3 +69,51 @@ export const createNewChat = async (req, res) => {
     res.status(500).json({ message: "Internal Server Error" });
   }
 };
+
+export const updateChat = async (req, res) => {
+  try {
+    const { chatId } = req.params;
+    const { users, name } = req.body;
+    const loggedUserId = req.user._id;
+
+    // Kiểm tra chat tồn tại
+    const chat = await Chat.findById(chatId);
+    if (!chat) {
+      return res.status(404).json({ message: "Chat not found" });
+    }
+
+    // Kiểm tra user có quyền update (phải là thành viên nhóm)
+    const isUserInChat = chat.users.some(
+      (userId) => userId.toString() === loggedUserId.toString()
+    );
+    if (!isUserInChat) {
+      return res.status(403).json({ message: "Unauthorized" });
+    }
+
+    // Update chat
+    const updatedChat = await Chat.findByIdAndUpdate(
+      chatId,
+      { name, users: [...users, loggedUserId] },
+      { new: true }
+    )
+      .populate({
+        path: "users",
+        select: "_id fullName profilePic",
+      })
+      .lean();
+
+    // Emit realtime update đến tất cả members
+    updatedChat.users.forEach((user) => {
+      const socketId = getUserSocketId(user._id);
+      const filterUsers = updatedChat.users.filter(
+        (u) => u._id.toString() != user._id.toString()
+      );
+      io.to(socketId).emit("chatUpdated", { ...updatedChat, users: filterUsers });
+    });
+
+    res.status(200).json(updatedChat);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};

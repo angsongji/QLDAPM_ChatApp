@@ -64,7 +64,7 @@ const PasswordInput = ({ control, isLoading, setPassValid, register }) => {
           type={showPass ? "text" : "password"}
           disabled={isLoading}
           className="w-full px-2 py-1"
-          autocomplete="new-password"
+          autoComplete="new-password"
         />
         <button
           type="button"
@@ -214,7 +214,7 @@ const FormSignUp = ({ isLoading, setIsLoading, navigate }) => {
           type="text"
           placeholder="fullname"
           disabled={isLoading}
-          autocomplete="new-fullName"
+          autoComplete="new-fullName"
         />
       </label>
       <label className="input">
@@ -240,7 +240,7 @@ const FormSignUp = ({ isLoading, setIsLoading, navigate }) => {
           type="email"
           placeholder="mail@site.com"
           disabled={isLoading}
-          autocomplete="new-email"
+          autoComplete="new-email"
         />
       </label>
       <PasswordInput
@@ -272,7 +272,7 @@ const FormSignUp = ({ isLoading, setIsLoading, navigate }) => {
           placeholder="confirm password"
           type="password"
           disabled={isLoading}
-          autocomplete="new-password"
+          autoComplete="new-password"
         />
       </label>
 

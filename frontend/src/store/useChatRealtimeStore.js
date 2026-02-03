@@ -49,6 +49,13 @@ export const useChatRealtimeStore = create((set, get) => ({
           setSelectedChat(newChat);
         setChattedUsers([...chattedUsers, newChat]);
       });
+
+      socket.on("chatUpdated", (newChat) => {
+        const { chattedUsers, setChattedUsers, selectedChat, setSelectedChat } =
+          useChatStore.getState();
+        if (selectedChat != null && selectedChat?._id != undefined && selectedChat._id == newChat._id)
+          setSelectedChat(newChat);
+      });
     }
   },
 

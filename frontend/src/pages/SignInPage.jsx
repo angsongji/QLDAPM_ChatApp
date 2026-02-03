@@ -59,7 +59,7 @@ const FormLogIn = ({ isLoading, setIsLoading }) => {
           type="email"
           placeholder="mail@site.com"
           disabled={isLoading}
-          autocomplete="current-email"
+          autoComplete="current-email"
         />
       </label>
       {/* Input sẽ chiếm phần còn lại */}
@@ -86,7 +86,7 @@ const FormLogIn = ({ isLoading, setIsLoading }) => {
           placeholder="password"
           type={showPass ? "text" : "password"}
           disabled={isLoading}
-          autocomplete="current-password"
+          autoComplete="current-password"
         />
         <button
           type="button"

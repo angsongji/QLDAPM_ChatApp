@@ -5,11 +5,15 @@ import { useThemeStore } from "../store/useThemeStore";
 import { FaLongArrowAltLeft } from "react-icons/fa";
 import { MdOutlineCreateNewFolder } from "react-icons/md";
 import { getUsers } from "../services/userService";
+import { updateChat } from "../services/chatService";
 import { containsNormalized } from "../utils/searchUsers";
 import LoadingPageSkeleton from "./LoadingPageSkeleton";
 import toast from "react-hot-toast";
-function InputName({ setChatData }) {
-  const [name, setName] = useState("");
+function InputName({ setChatData, initialName = "" }) {
+  const [name, setName] = useState(initialName);
+  useEffect(() => {
+    setName(initialName);
+  }, [initialName]);
   useEffect(() => {
     setChatData((prev) => ({ ...prev, name }));
   }, [name]);
@@ -56,7 +60,7 @@ function SearchUsers({ selectedUsers, setSelectedUsers }) {
         users.filter((user) => containsNormalized(user.fullName, valueSearch))
       );
   }, [valueSearch]);
-  useEffect(() => {}, [valueSearch]);
+  useEffect(() => { }, [valueSearch]);
 
   const handleClickSelectUsers = (user) => {
     const newSelectedUsers = selectedUsers.filter((u) => u._id != user._id);
@@ -117,9 +121,8 @@ const MemberTag = ({ user, handleButtonClick, selected = false }) => {
     <button
       type="button"
       onClick={() => handleButtonClick(user)}
-      className={`btn btn-xs md:btn-sm flex items-center m-1 h-8 w-auto btn-outline ${
-        selected && "btn-info "
-      }`}
+      className={`btn btn-xs md:btn-sm flex items-center m-1 h-8 w-auto btn-outline ${selected && "btn-info "
+        }`}
     >
       <div className="avatar h-[85%]">
         <div className="h-full w-auto aspect-square rounded-full">
@@ -133,8 +136,29 @@ const MemberTag = ({ user, handleButtonClick, selected = false }) => {
   );
 };
 
-function SelectUsers({ setChatData }) {
+function SelectUsers({ setChatData, initialUsers = [] }) {
   const [selectedUsers, setSelectedUsers] = useState([]);
+  const [allUsers, setAllUsers] = useState([]);
+
+  useEffect(() => {
+    const callApi = async () => {
+      try {
+        const result = await getUsers();
+        setAllUsers(result.data);
+        // Set initial users nếu có
+        if (initialUsers.length > 0) {
+          const selected = result.data.filter((user) =>
+            initialUsers.includes(user._id)
+          );
+          setSelectedUsers(selected);
+        }
+      } catch (error) {
+        // console.error("get users", error);
+      }
+    };
+    callApi();
+  }, [initialUsers]);
+
   useEffect(() => {
     setChatData((prev) => ({
       ...prev,
@@ -163,21 +187,29 @@ function SelectUsers({ setChatData }) {
         </div>
       </div>
       <p
-        className={`${
-          selectedUsers.length != 0 ? "block" : "hidden"
-        } label cursor-auto`}
+        className={`${selectedUsers.length != 0 ? "block" : "hidden"
+          } label cursor-auto`}
       >
         To delete someone, click on them.
       </p>
     </fieldset>
   );
 }
-function FormNewGroup({ showForm, setShowForm, theme }) {
+export function FormNewGroup({
+  showForm,
+  setShowForm,
+  theme,
+  mode = "create",
+  initialData = null
+}) {
   const formRef = useRef();
   const isCreateNewChatLoading = useChatStore(
     (state) => state.isCreateNewChatLoading
   );
   const createNewChat = useChatStore((state) => state.createNewChat);
+  const selectedChat = useChatStore((state) => state.selectedChat);
+  const setSelectedChat = useChatStore((state) => state.setSelectedChat);
+  const [isLoading, setIsLoading] = useState(false);
   const [chatData, setChatData] = useState({
     name: "",
     users: [],
@@ -188,26 +220,40 @@ function FormNewGroup({ showForm, setShowForm, theme }) {
     if (chatData.name == "") return toast.error("Group name is required");
     if (chatData.users.length < 2)
       return toast.error("A group has at least 2 members");
+
     try {
-      await createNewChat(chatData);
+      setIsLoading(true);
+      if (mode === "create") {
+        await createNewChat(chatData);
+      } else {
+        await updateChat(selectedChat._id, chatData);
+        toast.success("Group updated successfully");
+      }
       setShowForm(false);
     } catch (error) {
-      // console.error("error create group ", error);
+      toast.error(error?.response?.data?.message || "Error updating group");
+    } finally {
+      setIsLoading(false);
     }
   };
+
+  const isCreate = mode === "create";
+  const title = isCreate ? "Create new group" : "Edit group";
+  const buttonText = isCreate ? "Create" : "Update";
+  const loadingState = isCreate ? isCreateNewChatLoading : isLoading;
+
   return (
     <>
       <dialog
         ref={formRef}
         className={`
-        ${
-          showForm
+        ${showForm
             ? "translate-y-0 z-10 opacity-100"
             : "-translate-y-full opacity-0 z-0"
-        }
+          }
         block w-full shadow-md h-[60vh] md:h-full absolute cursor-pointer rounded-md left-0 top-0 transition duration-200 ease-linear`}
       >
-        {isCreateNewChatLoading ? (
+        {loadingState ? (
           <div className="w-full h-full">
             <LoadingPageSkeleton />
           </div>
@@ -224,14 +270,20 @@ function FormNewGroup({ showForm, setShowForm, theme }) {
             </div>
             <div className="py-2 flex flex-col gap-2 w-full h-full">
               <h1 className="font-semibold text-xl md:text-2xl cursor-auto">
-                Create new group
+                {title}
               </h1>
               <form onSubmit={handleSubmit} className=" flex-1 flex flex-col">
-                <InputName setChatData={setChatData} />
-                <SelectUsers setChatData={setChatData} />
+                <InputName
+                  setChatData={setChatData}
+                  initialName={initialData?.name || ""}
+                />
+                <SelectUsers
+                  setChatData={setChatData}
+                  initialUsers={initialData?.users || []}
+                />
                 <div className=" w-full h-full flex justify-center items-center mt-5 flex-1">
                   <button type="submit" className="btn">
-                    Create
+                    {buttonText}
                     <MdOutlineCreateNewFolder size={20} />
                   </button>
                 </div>
@@ -252,7 +304,6 @@ const SideBarChatCTA = () => {
   );
   const theme = useThemeStore((state) => state.theme);
   const [showForm, setShowForm] = useState(false);
-
   return (
     <div className="w-full" data-theme={theme}>
       <div className="w-full flex items-end justify-between flex-wrap-reverse gap-1 py-2 md:py-1 relative z-1">
@@ -270,11 +321,17 @@ const SideBarChatCTA = () => {
           New group
         </button>
       </div>
-      <FormNewGroup
-        showForm={showForm}
-        setShowForm={setShowForm}
-        theme={theme}
-      />
+      {
+        showForm && (
+          <FormNewGroup
+            showForm={showForm}
+            setShowForm={setShowForm}
+            theme={theme}
+            mode="create"
+          />
+        )
+      }
+
     </div>
   );
 };

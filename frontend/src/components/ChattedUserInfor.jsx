@@ -3,7 +3,10 @@ import { useChatStore } from "../store/useChatStore";
 import { useChatRealtimeStore } from "../store/useChatRealtimeStore";
 import { IoIosArrowForward } from "react-icons/io";
 import { IoIosArrowBack } from "react-icons/io";
+import { RiEdit2Fill } from "react-icons/ri";
+import { useThemeStore } from "../store/useThemeStore";
 import ListUsers from "./ListUsers";
+import { FormNewGroup } from "./SideBarChatCTA";
 
 const ShowMembersWrapper = forwardRef(({ selectedChat, onlineUsers }, ref) => {
   const [showMembers, setShowMembers] = useState(false);
@@ -45,6 +48,9 @@ const ChattedUserInfor = () => {
   const membersRef = useRef();
   const selectedChat = useChatStore((state) => state.selectedChat);
   const onlineUsers = useChatRealtimeStore((state) => state.onlineUsers);
+  const theme = useThemeStore((state) => state.theme);
+  const [showEditForm, setShowEditForm] = useState(false);
+  
   const memOnline = selectedChat?.users.filter((user) =>
     onlineUsers.some((userId) => userId == user._id)
   );
@@ -57,6 +63,18 @@ const ChattedUserInfor = () => {
               ref={membersRef}
               selectedChat={selectedChat}
               onlineUsers={onlineUsers}
+            />
+          )}
+          {selectedChat.users.length > 1 && (
+            <FormNewGroup
+              showForm={showEditForm}
+              setShowForm={setShowEditForm}
+              theme={theme}
+              mode="edit"
+              initialData={{
+                name: selectedChat.name,
+                users: selectedChat.users.map((u) => u._id),
+              }}
             />
           )}
           <div className="w-full h-[7vh] md:h-full flex px-4 bg-base-300 rounded-tl-box rounded-tr-box">
@@ -93,17 +111,27 @@ const ChattedUserInfor = () => {
                       : selectedChat.name}
                   </div>
                   {selectedChat.users.length > 1 && (
-                    <button
-                      onClick={() => membersRef.current.toggleMembers()}
-                      type="button"
-                      className="cursor-pointer hover:scale-95 transition duration-200 ease-in-out text-xs md:text-sm flex gap-1 items-center font-light"
-                    >
-                      <span>Members:</span>
-                      <span>{selectedChat.users.length + 1}</span>
-                      <span>
-                        <IoIosArrowForward className="text-gray-500 text-sm md:text-base" />
-                      </span>
-                    </button>
+                    <div className="flex items-center! gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setShowEditForm(true)}
+                        className="text-gray-600 cursor-pointer hover:scale-95 transition duration-200 ease-in-out"
+                      >
+                        <RiEdit2Fill />
+                      </button>
+                      <div className="text-gray-400">&#124;</div>
+                      <button
+                        onClick={() => membersRef.current.toggleMembers()}
+                        type="button"
+                        className="cursor-pointer hover:scale-95 transition duration-200 ease-in-out text-xs md:text-sm flex gap-1 items-center font-light"
+                      >
+                        <span>Members:</span>
+                        <span>{selectedChat.users.length}</span>
+                        <span>
+                          <IoIosArrowForward className="text-gray-500 text-sm md:text-base" />
+                        </span>
+                      </button>
+                    </div>
                   )}
                 </div>
                 {memOnline?.length != 0 && (

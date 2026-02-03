@@ -31,7 +31,7 @@ const ListUsers = ({ resultArray, onlineUsers, css }) => {
       {resultArray.map((result, index) => (
         <li key={index} className="list-row ">
           <div className="text-4xl font-thin opacity-30 tabular-nums">
-            {index < 10 ? "0" + (index + 1) : index + 1}
+            {index < 9 ? "0" + (index + 1) : index + 1}
           </div>
           <div>
             <img className="size-10 rounded-box" src={result.profilePic} />
